@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use App\Models\User;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\UpdateProfileRequest;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use App\Models\UserProfile;
-use App\Models\UserAddress;
 
 class AuthController extends Controller
 {
@@ -17,14 +16,8 @@ class AuthController extends Controller
         return view('auth.register');
     }
 
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|confirmed|min:6',
-        ]);
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -41,19 +34,20 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
         $credentials = $request->only('email', 'password');
+
         if (auth()->attempt($credentials)) {
             return redirect()->route('dashboard');
         }
+
         return back()->withErrors(['email' => 'Invalid credentials']);
     }
 
     public function dashboard()
     {
-        $user = auth()->user();
-        return view('dashboard', compact('user'));
+        return view('dashboard', ['user' => auth()->user()]);
     }
 
     public function editProfile()
@@ -62,13 +56,8 @@ class AuthController extends Controller
         return view('profile.edit', compact('user'));
     }
 
-    public function updateProfile(Request $request)
+    public function updateProfile(UpdateProfileRequest $request)
     {
-        $request->validate([
-            'father_name' => 'nullable|string|max:255',
-            'mother_name' => 'nullable|string|max:255',
-        ]);
-
         $profile = UserProfile::firstOrNew(['user_id' => auth()->id()]);
         $profile->father_name = $request->father_name;
         $profile->mother_name = $request->mother_name;
@@ -77,12 +66,8 @@ class AuthController extends Controller
         return redirect()->route('dashboard')->with('success', 'Profile updated successfully.');
     }
 
-    public function logout(Request $request)
+    public function logout()
     {
-        if ($request->session()->has('key')) {
-            $request->session()->forget('key');
-        }
-
         auth()->logout();
         return redirect()->route('login');
     }

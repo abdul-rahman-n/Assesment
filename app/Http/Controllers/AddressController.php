@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreAddressRequest;
+use App\Http\Requests\UpdateAddressRequest;
 use App\Models\UserAddress;
 
 class AddressController extends Controller
@@ -12,14 +13,8 @@ class AddressController extends Controller
         return view('addresses.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreAddressRequest $request)
     {
-        $request->validate([
-            'location_name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'pincode' => 'required|digits:6',
-        ]);
-
         UserAddress::create([
             'user_id' => auth()->id(),
             'location_name' => $request->location_name,
@@ -36,14 +31,8 @@ class AddressController extends Controller
         return view('addresses.edit', compact('address'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateAddressRequest $request, $id)
     {
-        $request->validate([
-            'location_name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'pincode' => 'required|digits:6',
-        ]);
-
         $address = UserAddress::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
         $address->update($request->only(['location_name', 'address', 'pincode']));
 
